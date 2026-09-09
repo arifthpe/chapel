@@ -63,7 +63,7 @@ class Chapel < Formula
 
     # This ENV avoids a problem where cmake cache is invalidated by subsequent make calls
     ENV["CHPL_CMAKE_USE_CC_CXX"] = "1"
-    ENV["CHPL_CMAKE_PYTHON"] = python3
+    ENV["CHPL_CMAKE_PYTHON"] = "python3"
 
     # This ENV avoids issues with GASNet picking up the wrong linker
     ENV["CHPL_IGNORE_GASNET_LD"] = "1"
