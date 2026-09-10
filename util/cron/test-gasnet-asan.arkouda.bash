@@ -29,6 +29,7 @@ export CHPL_TEST_ARKOUDA_PERF=false
 
 source $UTIL_CRON_DIR/common-arkouda.bash
 
-export CHPL_FLAGS="--parallel-make 16 --ccflags -Og"
+export CHPL_TEST_ARKOUDA_CORRECTNESS_PYTEST_OPTIONS="-v tests/pandas/io_test.py -k TestParquet"
+export CHPL_FLAGS="--parallel-make 16 --ccflags -Og -g --no-cpp-lines --savec gen"
 
 test_nightly
