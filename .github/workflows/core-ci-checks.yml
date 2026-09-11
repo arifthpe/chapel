@@ -626,9 +626,14 @@ jobs:
         with:
           sparse-checkout: util
           persist-credentials: false
-      - name: set vars to work from correct branch
+      - name: set env vars
         run: |
+          # Work from correct branch/SHA
           echo "GIT_REVISION=$GITHUB_REF" >> "$GITHUB_ENV"
+          # Limit build jobs for memory-constrained 32-bit build
+          if [[ "$VM_NAME" == *"x32"* ]]; then
+            echo "MAKEJ=-j1" >> "$GITHUB_ENV"
+          fi
       - name: bring up and provision VM (retrying)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
