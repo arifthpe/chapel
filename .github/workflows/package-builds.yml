@@ -2,6 +2,15 @@ name: Build Linux packages
 
 on:
   workflow_call:
+    inputs:
+      chpl_version:
+        required: false
+        type: string
+        default: ""
+      tarball_url:
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -40,6 +49,7 @@ jobs:
           echo "distro_configs=[$apt_distro_configs,$rpm_distro_configs]" >> "$GITHUB_OUTPUT"
 
   build-packaging-tarball:
+    if: ${{ inputs.tarball_url == '' }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/${{ github.repository_owner }}/chapel-github-ci:latest
@@ -73,6 +83,8 @@ jobs:
       DISTRO: ${{ matrix.distro }}
       ARCH: ${{ endsWith(matrix.runner, '-arm') && 'arm64' || 'x86' }}
       out_dir: "./output"
+      CHPL_TARBALL_LOCATION: ${{ inputs.tarball_url }}
+      CHPL_VERSION: ${{ inputs.chpl_version }}
     runs-on: ${{ matrix.runner }}
     steps:
       - name: sparse check out util/
@@ -80,7 +92,8 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: util/
-      - name: download packaging tarball
+      - name: download packaging tarball (if built in this run)
+        if: ${{ env.CHPL_TARBALL_LOCATION == '' }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: packaging-tarball
@@ -90,7 +103,13 @@ jobs:
           echo "Building the Chapel Package for: "
 
           source util/build_configs/functions.bash
-          CHPL_VERSION="$(get_src_major_version "$(pwd)").$(get_src_minor_version "$(pwd)").$(get_src_patch_version "$(pwd)")"
+
+          calculated_chpl_version="$(get_src_major_version "$(pwd)").$(get_src_minor_version "$(pwd)").$(get_src_patch_version "$(pwd)")"
+          if [[ -n "$CHPL_VERSION" ]]; then
+            CHPL_VERSION=$calculated_chpl_version
+          elif [[ "$CHPL_VERSION" != "$calculated_chpl_version" ]]; then
+            echo "Desired chpl version $CHPL_VERSION does not match source version $calculated_chpl_version"
+          fi
           export CHPL_VERSION
           echo "Chapel Version = $CHPL_VERSION"
 
@@ -103,10 +122,15 @@ jobs:
           export OS=$DISTRO
           echo "OS = $OS"
 
-          CHPL_RELEASE_TARBALL=$(find . -name "*.tar.gz")
-          CHPL_TARBALL=$(pwd)/$CHPL_RELEASE_TARBALL
-          echo "Latest tarball: $CHPL_TARBALL"
-          export CHPL_TARBALL
+          if [[ -n "$CHPL_TARBALL_LOCATION" ]]; then
+            echo "Using tarball from $CHPL_TARBALL_LOCATION"
+            export CHPL_TARBALL_LOCATION
+          else
+            CHPL_RELEASE_TARBALL=$(find . -name "*.tar.gz")
+            CHPL_TARBALL=$(pwd)/$CHPL_RELEASE_TARBALL
+            echo "Latest tarball: $CHPL_TARBALL"
+            export CHPL_TARBALL
+          fi
 
           PARALLEL=$(util/buildRelease/chpl-make-cpu_count)
           echo "PARALLEL = $PARALLEL"
