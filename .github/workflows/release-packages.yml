@@ -1,4 +1,4 @@
-name: build release tarball
+name: build release packages
 
 on:
   workflow_dispatch:
