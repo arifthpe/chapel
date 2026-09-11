@@ -32,6 +32,14 @@ jobs:
       - name: determine date
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+      - name: generate fallback email body
+        run: |
+          cat << EOF > "$EMAIL_BODY_FILENAME"
+          GitHub Actions nightly heartbeat job run failed, and also failed
+          to generate a failure mail.
+
+          Run ID: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
       - name: check last successful nightly run
         id: last_success
         run: |
