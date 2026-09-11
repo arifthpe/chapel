@@ -112,6 +112,7 @@ do
         continue
       fi
     fi
+
     echo "${NAME[$i]}:${RESULT[$i]}"
 
     ((++i))
