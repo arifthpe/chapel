@@ -78,6 +78,10 @@ jobs:
 
   build-linux-packages:
     needs: [define-linux-package-configs, build-packaging-tarball]
+    if: |
+      !cancelled() &&
+      needs.define-linux-package-configs.result == 'success' &&
+      (needs.build-packaging-tarball.result == 'success' || needs.build-packaging-tarball.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
